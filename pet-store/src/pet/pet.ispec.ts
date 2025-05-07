@@ -454,13 +454,12 @@ describe('Pet API', () => {
 
   it('should GET an array of pets with cost eq to 2000', async () => {
     // create a list of pets
-    const pets = [
+    const pets = await Promise.all([
       helper.randomPet({ cost: 1000 }),
       helper.randomPet({ cost: 2000 }),
       helper.randomPet({ cost: 2000 }),
       helper.randomPet({ cost: 2100 }),
-    ];
-    await Promise.all(pets);
+    ]);
 
     // query them via API
     return request(app.getHttpServer())

@@ -25,18 +25,20 @@ export class PetService {
   /*
     Helper function to convert passed query into mongoose filter object
   */
-  private parseFilterStringToFilterQuery(filter: PetQueryFilter): { [key: string]: number } {
+  private parseFilterStringToFilterQuery(filter: PetQueryFilter): { [key: string]: string | number } {
     const allowedOperators = ['eq', 'gt', 'lt', 'gte', 'lte'];
     const filterObj: any = {};
     if (!filter) return filterObj;
   
     allowedOperators.forEach((operator) => {
       if (filter[operator] !== undefined) {
-        filterObj[`$${operator}`] = Number(filter[operator]);
+        const rawValue = filter[operator];
+        const parsedValue = isNaN(Number(rawValue)) ? rawValue : Number(rawValue);
+        filterObj[`$${operator}`] = parsedValue;
       }
     });
     return filterObj;
-  }    
+  }      
 
   async list(
     filter: { age: PetQueryFilter; cost: PetQueryFilter; type: PetQueryFilter; name: PetQueryFilter },
@@ -61,6 +63,18 @@ export class PetService {
     const nameFilter = this.parseFilterStringToFilterQuery(filter.name);
     if (Object.keys(nameFilter).length > 0) {
       findFilter.name = nameFilter;
+    }
+
+    // apply type filter to find filter
+    const typeFilter = this.parseFilterStringToFilterQuery(filter.type);
+    if (Object.keys(typeFilter).length > 0) {
+      findFilter.type = typeFilter;
+    }
+    
+    // apply cost filter to find filter
+    const costFilter = this.parseFilterStringToFilterQuery(filter.cost);
+    if (Object.keys(costFilter).length > 0) {
+      findFilter.cost = costFilter;
     }
 
     // when executed, this query should represent the total number of documents in the collection
@@ -92,7 +106,7 @@ export class PetService {
       if (allowedFields.includes(sortKey)) {
         findQuery.sort({ [sortKey]: sortOrder });
       }
-    }    
+    }
 
     // execute the queries and then return the counts and data
     return Promise.all([totalCountQuery.exec(), filteredCountQuery.exec(), findQuery.exec()]).then((results) => {

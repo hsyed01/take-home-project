@@ -34,23 +34,20 @@ export default class PetTestHelper {
       type: PetTestHelper.getRandomEnumValue(PetTypes),
       createdAt: now,
       updatedAt: now,
+      ...overrides, // spread overrides to apply all allowed fields
     });
-    if (overrides.name) {
-      entity.name = overrides.name;
-    }
-    if (overrides.age) {
-      entity.age = overrides.age;
-    }
-    if (overrides.type) {
-      entity.type = overrides.type;
-    }
-    if (overrides.createdAt) {
-      entity.createdAt = overrides.createdAt;
-    }
+  
+    await entity.save();
+    // Manually patch updatedAt again if overridden (Mongoose overwrites it)
     if (overrides.updatedAt) {
+      await this.petModel.updateOne(
+        { _id: entity._id },
+        { $set: { updatedAt: overrides.updatedAt } },
+        { timestamps: false }
+      );
       entity.updatedAt = overrides.updatedAt;
     }
-    await entity.save();
+
     this.watchEntity(entity);
     return entity.toDto();
   }
