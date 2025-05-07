@@ -25,20 +25,18 @@ export class PetService {
   /*
     Helper function to convert passed query into mongoose filter object
   */
-  private parseFilterStringToFilterQuery(filter: PetQueryFilter): { $eq?: number; $gt?: number; $lt?: number } {
-    const allowedOperators = ['eq', 'gt', 'lt'];
-    const filterObj = {};
-    if (!filter) {
-      return filterObj;
-    }
+  private parseFilterStringToFilterQuery(filter: PetQueryFilter): { [key: string]: number } {
+    const allowedOperators = ['eq', 'gt', 'lt', 'gte', 'lte'];
+    const filterObj: any = {};
+    if (!filter) return filterObj;
+  
     allowedOperators.forEach((operator) => {
       if (filter[operator] !== undefined) {
-        // convert it into the mongoose filter style (e.g. age equals 5 is "age: {$eq: 5}")
-        filterObj['$' + operator] = filter[operator];
+        filterObj[`$${operator}`] = Number(filter[operator]);
       }
     });
     return filterObj;
-  }
+  }    
 
   async list(
     filter: { age: PetQueryFilter; cost: PetQueryFilter; type: PetQueryFilter; name: PetQueryFilter },
@@ -87,8 +85,14 @@ export class PetService {
     //  +/- => asc/desc
     //  key => sortable field
     if (sort) {
-      findQuery.sort({ age: 'asc' });
-    }
+      const sortOrder = sort[0] === '-' ? -1 : 1;
+      const sortKey = sort.slice(1);
+    
+      const allowedFields = ['cost', 'age', 'name', 'type'];
+      if (allowedFields.includes(sortKey)) {
+        findQuery.sort({ [sortKey]: sortOrder });
+      }
+    }    
 
     // execute the queries and then return the counts and data
     return Promise.all([totalCountQuery.exec(), filteredCountQuery.exec(), findQuery.exec()]).then((results) => {
@@ -119,7 +123,10 @@ export class PetService {
     });
   }
 
-  async delete(petId: string) {
-    throw new Error('Method not implemented.');
-  }
+  async delete(petId: string): Promise<void> {
+    const result = await this.petModel.findByIdAndDelete(petId);
+    if (!result) {
+      throw new NotFoundException(`Pet with ID ${petId} not found`);
+    }
+  }  
 }
