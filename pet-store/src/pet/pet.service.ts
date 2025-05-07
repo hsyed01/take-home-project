@@ -124,9 +124,6 @@ export class PetService {
   }
 
   async delete(petId: string): Promise<void> {
-    const result = await this.petModel.findByIdAndDelete(petId);
-    if (!result) {
-      throw new NotFoundException(`Pet with ID ${petId} not found`);
-    }
+    await this.petModel.findByIdAndDelete(petId);
   }  
 }
