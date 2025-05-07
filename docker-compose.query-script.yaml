@@ -32,6 +32,5 @@ services:
       network: host
       context: ./query-script
       dockerfile: Dockerfile
-      no_cache: true
     environment:
       - PET_STORE_HOST=pet-store

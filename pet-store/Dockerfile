@@ -20,5 +20,5 @@ RUN npm run build
 
 # Use "production" in NodeJs
 ENV NODE_ENV=production
-
+RUN chmod +x ./scripts/start_app.sh
 ENTRYPOINT [ "./scripts/start_app.sh" ]
